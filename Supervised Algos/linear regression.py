@@ -4,7 +4,7 @@ class LinearRegression:
     def __init__(self):
         pass
 
-    def train(self, X: np.ndarray, y: np.ndarray, lr: float=0.01, epochs: int=1000):
+    def train(self, X: np.ndarray, y: np.ndarray, lr: float=0.01, epochs: int=1000) -> None:
         m, n = X.shape
 
         self.w = np.random.rand(n, 1) - 0.5
@@ -19,7 +19,7 @@ class LinearRegression:
             self.w -= lr * dw
             self.b -= lr * db
 
-    def __call__(self, X):
+    def __call__(self, X: np.ndarray) -> np.ndarray:
         return np.dot(X, self.w) + self.b
 
 
