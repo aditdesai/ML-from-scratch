@@ -13,7 +13,7 @@ def train(config):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model = CLIP(config.emb_dim, config.vit_d_model, (28, 28), (14, 14), 1, config.vit_layers, config.vit_heads, config.vocab_size, config.text_d_model, config.max_seq_length, config.text_heads, config.text_layers, 0.1)
-    optim = torch.optim.Adam(model.parameters, lr=config.lr)
+    optim = torch.optim.Adam(model.parameters(), lr=config.lr)
 
     model.train()
     best_loss = torch.inf
@@ -34,7 +34,7 @@ def train(config):
 
         if train_loss <= best_loss:
             best_loss = train_loss
-            torch.save(model.state_dict(), "/clip.pth")
+            torch.save(model.state_dict(), "clip.pth")
             print("Model saved.")
 
 

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import math
+import numpy as np
 
 
 class PatchEmbedding(nn.Module):
@@ -26,7 +27,6 @@ class PositionalEmbedding(nn.Module):
     def __init__(self, d_model: int, seq_len: int, dropout: float):
         super().__init__()
 
-        self.cls_token = nn.Parameter(torch.randn(1, 1, d_model))
         self.dropout = nn.Dropout(dropout)
 
         pe = torch.zeros(seq_len, d_model)
@@ -34,17 +34,15 @@ class PositionalEmbedding(nn.Module):
         for pos in range(seq_len):
             for i in range(d_model):
                 if i % 2 == 0:
-                    pe[pos][i] = torch.sin(pos / (10000 ** (i / d_model)))
+                    pe[pos][i] = np.sin(pos / (10000 ** (i / d_model)))
                 else:
-                    pe[pos][i] = torch.cos(pos / (10000 ** ((i-1) / d_model)))
+                    pe[pos][i] = np.cos(pos / (10000 ** ((i-1) / d_model)))
 
         self.register_buffer('pe', pe.unsqueeze(0))
             
 
     def forward(self, x):
-        cls_tokens = self.cls_token.expand(x.size(0), -1, -1) # (b, 1, d_model)
-        x = torch.cat([cls_tokens, x], dim=1) # concatenate class tokens with patch embeddings
-        x = x + self.pe[:, :x.size(1)]
+        x = x + self.pe
 
         return self.dropout(x)
     
@@ -138,7 +136,7 @@ class TextEncoder(nn.Module):
         self.max_seq_length = max_seq_length
 
         self.encoder_embedding = nn.Embedding(vocab_size, d_model)
-        self.positional_embedding = PositionalEmbedding(d_model, max_seq_length)
+        self.positional_embedding = PositionalEmbedding(d_model, max_seq_length, dropout)
         self.encoder = nn.ModuleList([TransformerEncoder(d_model, n_heads, dropout) for _ in range(n_layers)])
 
         # Projects the final encoder output to a joint multimodal embedding space
@@ -179,6 +177,7 @@ class ImageEncoder(nn.Module):
         self.n_patches = (img_size[0] // patch_size[0]) * (img_size[1] // patch_size[1])
         self.max_seq_len = self.n_patches + 1
         self.patch_embedding = PatchEmbedding(d_model, img_size, patch_size, n_channels)
+        self.cls_token = nn.Parameter(torch.randn(1, 1, d_model))
         self.position_embedding = PositionalEmbedding(d_model, self.max_seq_len, dropout)
         self.encoder = nn.ModuleList([TransformerEncoder(d_model, n_heads, dropout) for _ in range(n_layers)])
 
@@ -187,6 +186,8 @@ class ImageEncoder(nn.Module):
 
     def forward(self, x):
         x = self.patch_embedding(x)
+
+        x = torch.cat((self.cls_token.expand(x.size()[0], -1, -1),x), dim=1)
         x = self.position_embedding(x)
 
         for encoder_layer in self.encoder:
@@ -206,9 +207,11 @@ class ImageEncoder(nn.Module):
 
 class CLIP(nn.Module):
     def __init__(self, emb_dim: int, vit_d_model: int, img_size: tuple, patch_size: tuple, n_channels: int, vit_layers: int, vit_heads: int, vocab_size: int, text_d_model: int, max_seq_length: int, text_heads: int, text_layers: int, dropout: float):
+        super().__init__()
+
         self.image_encoder = ImageEncoder(vit_d_model, img_size, patch_size, n_channels, vit_layers, vit_heads, emb_dim, dropout)
         self.text_encoder = TextEncoder(vocab_size, text_d_model, max_seq_length, text_heads, text_layers, emb_dim, dropout)
-        self.temperature = nn.Parameter(torch.ones([]) * torch.log(1 / 0.07))
+        self.temperature = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, image, text, mask=None):
