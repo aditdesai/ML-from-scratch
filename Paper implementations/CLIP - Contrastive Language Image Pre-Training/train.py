@@ -13,6 +13,7 @@ def train(config):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model = CLIP(config.emb_dim, config.vit_d_model, (28, 28), (14, 14), 1, config.vit_layers, config.vit_heads, config.vocab_size, config.text_d_model, config.max_seq_length, config.text_heads, config.text_layers, 0.1)
+    model = model.to(device)
     optim = torch.optim.Adam(model.parameters(), lr=config.lr)
 
     model.train()
