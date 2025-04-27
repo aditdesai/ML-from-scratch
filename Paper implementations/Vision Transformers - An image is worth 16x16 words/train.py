@@ -30,6 +30,10 @@ def train(config: dict) -> None:
 
     train_dataloader, test_dataloader = create_dataloaders(config['img_size'], config['batch_size'])
 
+    for batch in train_dataloader:
+        print(batch)
+        break
+
     model = VisionTransformer(config['d_model'], config['n_classes'], config['img_size'], config['patch_size'], config['n_channels'], config['n_heads'], config['n_layers'], config['dropout'])
     model = model.to(device)
 

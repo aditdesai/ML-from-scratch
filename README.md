@@ -1,7 +1,5 @@
 # Implementation of ML algorithms from scratch
 
-No sklearn, no pytorch and no tensorflow (only numpy)
-
 ## Supervised learning algorithms implemented
 
 - Linear Regression
@@ -23,3 +21,13 @@ No sklearn, no pytorch and no tensorflow (only numpy)
 - k-means clustering
 - PCA
 
+## Paper Implementations
+
+- Deep Convolutional Generative Adversarial Networks
+- Conditional Generative Adversarial Networks
+- Variational Auto Encoders
+- Diffusion Models (DDPM)
+- Transformers (Attention is all you need)
+- Vision Transformers
+- Contrastive Language Image Pre-training
+- Low Rank Adaptation
